@@ -101,3 +101,41 @@ plot_distribution_categorie <- function(df) {
 
 plot_distribution_categorie(df_fin)
 
+# Q10 : Amélioration de la fonction max [2, 10]
+# On ajoute la moyenne par mois et par catégorie
+trouver_depense_max_amelioree <- function(df) {
+  res <- trouver_depense_max(df)
+
+  # Calcul des moyennes
+  moyenne_mois <- df %>% filtrer_depenses() %>% filter(Month == format(res$Date, "%Y-%m")) %>% summarise(moy = mean(Amount)) %>% pull(moy)
+  moyenne_categorie <- df %>% filtrer_depenses() %>% filter(Description == res$Description) %>% summarise(moy = mean(Amount)) %>% pull(moy)
+
+  res$Moyenne_Mois <- moyenne_mois
+  res$Moyenne_Categorie <- moyenne_categorie
+
+  return(res)
+}
+
+# Q11 (Bonus) : Utilisation du paradigme objet S3 [2, 12]
+
+# 1. On crée une méthode générique nommée "max_finance"
+max_finance <- function(x) {
+  UseMethod("max_finance") # C'est ce qui permet le dispatch S3 [11]
+}
+
+# 2. On crée la méthode spécifique pour la classe "finance_data"
+max_finance.finance_data <- function(x) {
+  # Vérification que les colonnes nécessaires existent [2, 12]
+  if(!all(c("Amount", "Transaction Type", "Account Name", "Date") %in% names(x))) {
+    stop("Le data.frame ne contient pas les colonnes requises.")
+  }
+
+  return(trouver_depense_max_amelioree(x))
+}
+
+# 3. Test du système S3
+# On attribue notre nouvelle classe à notre data.frame [2, 13]
+class(df_m_2018_01) <- c("finance_data", class(df_m_2018_01))
+
+# On appelle la fonction générique sur notre objet
+max_finance(df_m_2018_01)
